@@ -1,4 +1,6 @@
-﻿using System;
+﻿using ChaiSuttaBreak.KeyboardUtils;
+using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 namespace ChaiSuttaBreak
@@ -55,6 +57,15 @@ namespace ChaiSuttaBreak
             TrayIcon.MouseClick += TrayIcon_Click;
 
             UpdateTrayMenu();
+            GlobalKeyboardHook.Instance.Hook(new List<System.Windows.Input.Key> { System.Windows.Input.Key.LeftShift,System.Windows.Input.Key.B },
+            () =>
+            {
+                Console.WriteLine("A-B");
+                ToggleAction();
+            }, out string message);
+
+
+            
         }
 
 
@@ -116,6 +127,11 @@ namespace ChaiSuttaBreak
 
         private void StartStopMenuItem_Click(object sender, EventArgs e)
         {
+            ToggleAction();
+        }
+
+        private void ToggleAction()
+        {
             if (IsRunning)
             {
                 IsRunning = false;
@@ -139,7 +155,12 @@ namespace ChaiSuttaBreak
         private void CloseMenuItem_Click(object sender, EventArgs e) { Application.Exit(); }
         private void RefreshTimer_Tick(object sender, EventArgs e)
         {
+            SendKeys.Send("{SCROLLLOCK}");
+            SendKeys.Send("{NUMLOCK}");
             WindowsUtility.SetThreadExecutionState(ExecutionMode);
+            SendKeys.Send("{SCROLLLOCK}");
+            SendKeys.Send("{NUMLOCK}");
+
         }
     }
 }

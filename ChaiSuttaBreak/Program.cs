@@ -1,4 +1,6 @@
-﻿using System;
+﻿using ChaiSuttaBreak.KeyboardUtils;
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -14,11 +16,11 @@ namespace ChaiSuttaBreak
 
             if (!createdNew)
             {
-                _ = MessageBox.Show("Application already running","ChaiSuttaBreak", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                _ = MessageBox.Show("Application already running", "ChaiSuttaBreak", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
                 return;
             }
 
-
+            
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new TrayContext());
