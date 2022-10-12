@@ -4,27 +4,27 @@ using System.Drawing;
 using System.Windows.Forms;
 namespace ChaiSuttaBreak
 {
-    class TrayContext : ApplicationContext
+    internal class TrayContext : ApplicationContext
     {
         /// <summary>
         /// Interval between timer ticks (in ms) to refresh Windows idle timers. Shouldn't be too small to avoid resources consumption. Must be less then Windows screensaver/sleep timer.
         /// Default = 10 000 ms (10 seconds).
         /// </summary>
-        const int RefreshInterval = 10000;
+        private const int RefreshInterval = 10000;
         /// <summary>
         /// ExecutionMode defines how blocking is made. See details at https://msdn.microsoft.com/en-us/library/aa373208.aspx?f=255&MSPPError=-2147217396
         /// </summary>
-        const EXECUTION_STATE ExecutionMode = EXECUTION_STATE.ES_CONTINUOUS | EXECUTION_STATE.ES_DISPLAY_REQUIRED | EXECUTION_STATE.ES_SYSTEM_REQUIRED | EXECUTION_STATE.ES_AWAYMODE_REQUIRED;
+        private const EXECUTION_STATE ExecutionMode = EXECUTION_STATE.ES_CONTINUOUS | EXECUTION_STATE.ES_DISPLAY_REQUIRED | EXECUTION_STATE.ES_SYSTEM_REQUIRED | EXECUTION_STATE.ES_AWAYMODE_REQUIRED;
 
         // PRIVATE VARIABLES
-        private NotifyIcon TrayIcon;
-        private Timer RefreshTimer;
-        private bool IsRunning = true;
-        readonly Image GreenIcon = Properties.Resource1.Green;
-        readonly Image OrangeIcon = Properties.Resource1.Orange;
-        readonly Image ResumeIcon = Properties.Resource1.start;
-        readonly Image SuspendIcon = Properties.Resource1.pause;
-        readonly Image ExitIcon = Properties.Resource1.quit;
+        private NotifyIcon _trayIcon;
+        private Timer _refreshTimer;
+        private bool _isRunning = true;
+        private readonly Image _greenIcon = Properties.IconResources.Green;
+        private readonly Image _orangeIcon = Properties.IconResources.Orange;
+        private readonly Image _resumeIcon = Properties.IconResources.start;
+        private readonly Image _suspendIcon = Properties.IconResources.pause;
+        private readonly Image _exitIcon = Properties.IconResources.quit;
 
 
 
@@ -33,12 +33,12 @@ namespace ChaiSuttaBreak
             // Initialize application
             Application.ApplicationExit += this.OnApplicationExit;
             InitializeComponent();
-            TrayIcon.Visible = true;
+            _trayIcon.Visible = true;
 
 
             // Set timer to tick to refresh idle timers
-            RefreshTimer = new Timer() { Interval = RefreshInterval, Enabled = true };
-            RefreshTimer.Tick += RefreshTimer_Tick;
+            _refreshTimer = new Timer() { Interval = RefreshInterval, Enabled = true };
+            _refreshTimer.Tick += RefreshTimer_Tick;
 
         }
 
@@ -46,25 +46,24 @@ namespace ChaiSuttaBreak
         private void InitializeComponent()
         {
             // Initialize Tray icon
-            TrayIcon = new NotifyIcon();
-            TrayIcon.BalloonTipIcon = ToolTipIcon.None;
-            TrayIcon.BalloonTipText = "Feel free Sneak out, I will Keep this PC active!";
-            TrayIcon.BalloonTipTitle = "Chai Sutta Break";
-            TrayIcon.Text = "It's time for Chai Sutta ?";
-            TrayIcon.Icon = Properties.Resource1.ChaiSutta;
-            TrayIcon.DoubleClick += TrayIcon_DoubleClick;
-            TrayIcon.MouseClick += TrayIcon_Click;
+            _trayIcon = new NotifyIcon();
+            _trayIcon.BalloonTipIcon = ToolTipIcon.None;
+            _trayIcon.BalloonTipText = "Feel free Sneak out, I will Keep this PC active!";
+            _trayIcon.BalloonTipTitle = "Chai Sutta Break";
+            _trayIcon.Text = "It's time for Chai Sutta ?";
+            _trayIcon.Icon = Properties.IconResources.ChaiSutta;
+            _trayIcon.DoubleClick += TrayIcon_DoubleClick;
 
             UpdateTrayMenu();
-            GlobalKeyboardHook.Instance.Hook(new List<System.Windows.Input.Key> { System.Windows.Input.Key.LeftShift,System.Windows.Input.Key.B },
+            GlobalKeyboardHook.Instance.Hook(new List<System.Windows.Input.Key> { System.Windows.Input.Key.LeftShift, System.Windows.Input.Key.B },
             () =>
             {
                 Console.WriteLine("A-B");
                 ToggleAction();
-            }, out string message);
+            }, out var message);
 
 
-            
+
         }
 
 
@@ -79,27 +78,27 @@ namespace ChaiSuttaBreak
             var toolStripStatusLabel = new ToolStripLabel();
 
 
-            if (IsRunning)
+            if (_isRunning)
             {
                 toolStripStatusLabel.Text = "   Active";
-                toolStripStatusLabel.Image = GreenIcon;
+                toolStripStatusLabel.Image = _greenIcon;
 
                 ResumeMenuItem.Text = "Suspend";
-                ResumeMenuItem.Image = SuspendIcon;
+                ResumeMenuItem.Image = _suspendIcon;
             }
             else
             {
                 toolStripStatusLabel.Text = "   Suspended";
-                toolStripStatusLabel.Image = OrangeIcon;
+                toolStripStatusLabel.Image = _orangeIcon;
 
                 ResumeMenuItem.Text = "Resume";
-                ResumeMenuItem.Image = ResumeIcon;
+                ResumeMenuItem.Image = _resumeIcon;
 
             }
 
             ResumeMenuItem.Click += this.StartStopMenuItem_Click;
             ExitMenuItem.Text = "Exit                       ";
-            ExitMenuItem.Image = ExitIcon;
+            ExitMenuItem.Image = _exitIcon;
             ExitMenuItem.Click += this.CloseMenuItem_Click;
 
             var contextMenuStrip = new ContextMenuStrip();
@@ -110,7 +109,7 @@ namespace ChaiSuttaBreak
             contextMenuStrip.Items.Add(ResumeMenuItem);
             contextMenuStrip.Items.Add(ExitMenuItem);
 
-            TrayIcon.ContextMenuStrip = contextMenuStrip;
+            _trayIcon.ContextMenuStrip = contextMenuStrip;
 
         }
 
@@ -118,8 +117,8 @@ namespace ChaiSuttaBreak
         private void OnApplicationExit(object sender, EventArgs e)
         {
             // Clean up things on exit
-            TrayIcon.Visible = false;
-            RefreshTimer.Enabled = false;
+            _trayIcon.Visible = false;
+            _refreshTimer.Enabled = false;
             // Clean up continuous state, if required
             if (ExecutionMode.HasFlag(EXECUTION_STATE.ES_CONTINUOUS)) WindowsUtility.SetThreadExecutionState(EXECUTION_STATE.ES_CONTINUOUS);
         }
@@ -131,26 +130,24 @@ namespace ChaiSuttaBreak
 
         private void ToggleAction()
         {
-            if (IsRunning)
+            if (_isRunning)
             {
-                IsRunning = false;
-                RefreshTimer.Stop();
+                _isRunning = false;
+                _refreshTimer.Stop();
+                _trayIcon.ShowBalloonTip(10000,"Chai Sutta Break","Break mode suspended!",ToolTipIcon.Info);
             }
             else
             {
-                IsRunning = true;
-                RefreshTimer.Start();
+                _isRunning = true;
+                _refreshTimer.Start();
+                _trayIcon.ShowBalloonTip(10000, "Chai Sutta Break", "Break mode resumed!", ToolTipIcon.Info);
+
             }
 
             UpdateTrayMenu();
         }
-        private void TrayIcon_DoubleClick(object sender, EventArgs e) { TrayIcon.ShowBalloonTip(10000); }
-        private void TrayIcon_Click(object sender, MouseEventArgs e)
-        {
+        private void TrayIcon_DoubleClick(object sender, EventArgs e) { _trayIcon.ShowBalloonTip(10000); }
 
-            if (e.Button == MouseButtons.Left)
-                TrayIcon.ShowBalloonTip(10000);
-        }
         private void CloseMenuItem_Click(object sender, EventArgs e) { Application.Exit(); }
         private void RefreshTimer_Tick(object sender, EventArgs e)
         {
